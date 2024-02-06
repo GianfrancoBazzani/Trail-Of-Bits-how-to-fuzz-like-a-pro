@@ -49,9 +49,6 @@ Examples:
 - Foundry Fuzz & invariant.
 
 ## What is fuzzing?
-
-![[Pasted image 20240205114549.png]]
-
 1. Random input generation.
 2. Execute test against system under test.
 3. If test fails record inputs and stop else start over again.
