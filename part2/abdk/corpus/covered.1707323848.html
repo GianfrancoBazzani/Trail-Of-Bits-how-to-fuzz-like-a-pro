@@ -1,0 +1,1102 @@
+<style> code { white-space: pre-wrap; display: block; background-color: #eee; }.executed { background-color: #afa; }.reverted { background-color: #ffa; }.unexecuted { background-color: #faa; }.neutral { background-color: #eee; }</style><b>/home/gianfranco/GitHub/Trail-Of-Bits-how-to-fuzz-like-a-pro-homework/part2/abdk/ABDKMath64x64.sol</b>
+<code>
+   1 |     | <span class='neutral'>// SPDX-License-Identifier: BSD-4-Clause</span>
+   2 |     | <span class='neutral'>/*</span>
+   3 |     | <span class='neutral'> * ABDK Math 64.64 Smart Contract Library.  Copyright © 2019 by ABDK Consulting.</span>
+   4 |     | <span class='neutral'> * Author: Mikhail Vladimirov &lt;mikhail.vladimirov@gmail.com&gt;</span>
+   5 |     | <span class='neutral'> */</span>
+   6 |     | <span class='neutral'>pragma solidity ^0.8.0;</span>
+   7 |     | <span class='neutral'></span>
+   8 |     | <span class='neutral'>/**</span>
+   9 |     | <span class='neutral'> * Smart contract library of mathematical functions operating with signed</span>
+  10 |     | <span class='neutral'> * 64.64-bit fixed point numbers.  Signed 64.64-bit fixed point number is</span>
+  11 |     | <span class='neutral'> * basically a simple fraction whose numerator is signed 128-bit integer and</span>
+  12 |     | <span class='neutral'> * denominator is 2^64.  As long as denominator is always the same, there is no</span>
+  13 |     | <span class='neutral'> * need to store it, thus in Solidity signed 64.64-bit fixed point numbers are</span>
+  14 |     | <span class='neutral'> * represented by int128 type holding only the numerator.</span>
+  15 |     | <span class='neutral'> */</span>
+  16 |     | <span class='unexecuted'>library ABDKMath64x64 {</span>
+  17 |     | <span class='neutral'>  /*</span>
+  18 |     | <span class='neutral'>   * Minimum value signed 64.64-bit fixed point number may have. </span>
+  19 |     | <span class='neutral'>   */</span>
+  20 | *   | <span class='executed'>  int128 private constant MIN_64x64 = -0x80000000000000000000000000000000;</span>
+  21 |     | <span class='neutral'></span>
+  22 |     | <span class='neutral'>  /*</span>
+  23 |     | <span class='neutral'>   * Maximum value signed 64.64-bit fixed point number may have. </span>
+  24 |     | <span class='neutral'>   */</span>
+  25 | *   | <span class='executed'>  int128 private constant MAX_64x64 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;</span>
+  26 |     | <span class='neutral'></span>
+  27 |     | <span class='neutral'>  /**</span>
+  28 |     | <span class='neutral'>   * Convert signed 256-bit integer number into signed 64.64-bit fixed point</span>
+  29 |     | <span class='neutral'>   * number.  Revert on overflow.</span>
+  30 |     | <span class='neutral'>   *</span>
+  31 |     | <span class='neutral'>   * @param x signed 256-bit integer number</span>
+  32 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+  33 |     | <span class='neutral'>   */</span>
+  34 |     | <span class='unexecuted'>  function fromInt (int256 x) internal pure returns (int128) {</span>
+  35 |     | <span class='neutral'>    unchecked {</span>
+  36 |     | <span class='unexecuted'>      require (x &gt;= -0x8000000000000000 &amp;&amp; x &lt;= 0x7FFFFFFFFFFFFFFF);</span>
+  37 |     | <span class='unexecuted'>      return int128 (x &lt;&lt; 64);</span>
+  38 |     | <span class='neutral'>    }</span>
+  39 |     | <span class='neutral'>  }</span>
+  40 |     | <span class='neutral'></span>
+  41 |     | <span class='neutral'>  /**</span>
+  42 |     | <span class='neutral'>   * Convert signed 64.64 fixed point number into signed 64-bit integer number</span>
+  43 |     | <span class='neutral'>   * rounding down.</span>
+  44 |     | <span class='neutral'>   *</span>
+  45 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+  46 |     | <span class='neutral'>   * @return signed 64-bit integer number</span>
+  47 |     | <span class='neutral'>   */</span>
+  48 | *   | <span class='executed'>  function toInt (int128 x) internal pure returns (int64) {</span>
+  49 |     | <span class='neutral'>    unchecked {</span>
+  50 | *   | <span class='executed'>      return int64 (x &gt;&gt; 64);</span>
+  51 |     | <span class='neutral'>    }</span>
+  52 |     | <span class='neutral'>  }</span>
+  53 |     | <span class='neutral'></span>
+  54 |     | <span class='neutral'>  /**</span>
+  55 |     | <span class='neutral'>   * Convert unsigned 256-bit integer number into signed 64.64-bit fixed point</span>
+  56 |     | <span class='neutral'>   * number.  Revert on overflow.</span>
+  57 |     | <span class='neutral'>   *</span>
+  58 |     | <span class='neutral'>   * @param x unsigned 256-bit integer number</span>
+  59 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+  60 |     | <span class='neutral'>   */</span>
+  61 | *   | <span class='executed'>  function fromUInt (uint256 x) internal pure returns (int128) {</span>
+  62 |     | <span class='neutral'>    unchecked {</span>
+  63 | *   | <span class='executed'>      require (x &lt;= 0x7FFFFFFFFFFFFFFF);</span>
+  64 | *   | <span class='executed'>      return int128 (int256 (x &lt;&lt; 64));</span>
+  65 |     | <span class='neutral'>    }</span>
+  66 |     | <span class='neutral'>  }</span>
+  67 |     | <span class='neutral'></span>
+  68 |     | <span class='neutral'>  /**</span>
+  69 |     | <span class='neutral'>   * Convert signed 64.64 fixed point number into unsigned 64-bit integer</span>
+  70 |     | <span class='neutral'>   * number rounding down.  Revert on underflow.</span>
+  71 |     | <span class='neutral'>   *</span>
+  72 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+  73 |     | <span class='neutral'>   * @return unsigned 64-bit integer number</span>
+  74 |     | <span class='neutral'>   */</span>
+  75 |     | <span class='neutral'>  function toUInt (int128 x) internal pure returns (uint64) {</span>
+  76 |     | <span class='neutral'>    unchecked {</span>
+  77 |     | <span class='neutral'>      require (x &gt;= 0);</span>
+  78 |     | <span class='neutral'>      return uint64 (uint128 (x &gt;&gt; 64));</span>
+  79 |     | <span class='neutral'>    }</span>
+  80 |     | <span class='neutral'>  }</span>
+  81 |     | <span class='neutral'></span>
+  82 |     | <span class='neutral'>  /**</span>
+  83 |     | <span class='neutral'>   * Convert signed 128.128 fixed point number into signed 64.64-bit fixed point</span>
+  84 |     | <span class='neutral'>   * number rounding down.  Revert on overflow.</span>
+  85 |     | <span class='neutral'>   *</span>
+  86 |     | <span class='neutral'>   * @param x signed 128.128-bin fixed point number</span>
+  87 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+  88 |     | <span class='neutral'>   */</span>
+  89 |     | <span class='neutral'>  function from128x128 (int256 x) internal pure returns (int128) {</span>
+  90 |     | <span class='neutral'>    unchecked {</span>
+  91 |     | <span class='neutral'>      int256 result = x &gt;&gt; 64;</span>
+  92 |     | <span class='neutral'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+  93 |     | <span class='neutral'>      return int128 (result);</span>
+  94 |     | <span class='neutral'>    }</span>
+  95 |     | <span class='neutral'>  }</span>
+  96 |     | <span class='neutral'></span>
+  97 |     | <span class='neutral'>  /**</span>
+  98 |     | <span class='neutral'>   * Convert signed 64.64 fixed point number into signed 128.128 fixed point</span>
+  99 |     | <span class='neutral'>   * number.</span>
+ 100 |     | <span class='neutral'>   *</span>
+ 101 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 102 |     | <span class='neutral'>   * @return signed 128.128 fixed point number</span>
+ 103 |     | <span class='neutral'>   */</span>
+ 104 |     | <span class='neutral'>  function to128x128 (int128 x) internal pure returns (int256) {</span>
+ 105 |     | <span class='neutral'>    unchecked {</span>
+ 106 |     | <span class='neutral'>      return int256 (x) &lt;&lt; 64;</span>
+ 107 |     | <span class='neutral'>    }</span>
+ 108 |     | <span class='neutral'>  }</span>
+ 109 |     | <span class='neutral'></span>
+ 110 |     | <span class='neutral'>  /**</span>
+ 111 |     | <span class='neutral'>   * Calculate x + y.  Revert on overflow.</span>
+ 112 |     | <span class='neutral'>   *</span>
+ 113 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 114 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 115 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 116 |     | <span class='neutral'>   */</span>
+ 117 | *   | <span class='executed'>  function add (int128 x, int128 y) internal pure returns (int128) {</span>
+ 118 |     | <span class='neutral'>    unchecked {</span>
+ 119 |     | <span class='neutral'>      // bug: Introduced +1 here</span>
+ 120 | *   | <span class='executed'>      int256 result = int256(x) + y;</span>
+ 121 | *r  | <span class='executed'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 122 | *   | <span class='executed'>      return int128 (result);</span>
+ 123 |     | <span class='neutral'>    }</span>
+ 124 |     | <span class='neutral'>  }</span>
+ 125 |     | <span class='neutral'></span>
+ 126 |     | <span class='neutral'>  /**</span>
+ 127 |     | <span class='neutral'>   * Calculate x - y.  Revert on overflow.</span>
+ 128 |     | <span class='neutral'>   *</span>
+ 129 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 130 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 131 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 132 |     | <span class='neutral'>   */</span>
+ 133 | *   | <span class='executed'>  function sub (int128 x, int128 y) internal pure returns (int128) {</span>
+ 134 |     | <span class='neutral'>    unchecked {</span>
+ 135 | *   | <span class='executed'>      int256 result = int256(x) - y;</span>
+ 136 | *   | <span class='executed'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 137 | *   | <span class='executed'>      return int128 (result);</span>
+ 138 |     | <span class='neutral'>    }</span>
+ 139 |     | <span class='neutral'>  }</span>
+ 140 |     | <span class='neutral'></span>
+ 141 |     | <span class='neutral'>  /**</span>
+ 142 |     | <span class='neutral'>   * Calculate x * y rounding down.  Revert on overflow.</span>
+ 143 |     | <span class='neutral'>   *</span>
+ 144 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 145 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 146 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 147 |     | <span class='neutral'>   */</span>
+ 148 | *   | <span class='executed'>  function mul (int128 x, int128 y) internal pure returns (int128) {</span>
+ 149 |     | <span class='neutral'>    unchecked {</span>
+ 150 | *   | <span class='executed'>      int256 result = int256(x) * y &gt;&gt; 64;</span>
+ 151 | *r  | <span class='executed'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 152 | *   | <span class='executed'>      return int128 (result);</span>
+ 153 |     | <span class='neutral'>    }</span>
+ 154 |     | <span class='neutral'>  }</span>
+ 155 |     | <span class='neutral'></span>
+ 156 |     | <span class='neutral'>  /**</span>
+ 157 |     | <span class='neutral'>   * Calculate x * y rounding towards zero, where x is signed 64.64 fixed point</span>
+ 158 |     | <span class='neutral'>   * number and y is signed 256-bit integer number.  Revert on overflow.</span>
+ 159 |     | <span class='neutral'>   *</span>
+ 160 |     | <span class='neutral'>   * @param x signed 64.64 fixed point number</span>
+ 161 |     | <span class='neutral'>   * @param y signed 256-bit integer number</span>
+ 162 |     | <span class='neutral'>   * @return signed 256-bit integer number</span>
+ 163 |     | <span class='neutral'>   */</span>
+ 164 |     | <span class='neutral'>  function muli (int128 x, int256 y) internal pure returns (int256) {</span>
+ 165 |     | <span class='neutral'>    unchecked {</span>
+ 166 |     | <span class='neutral'>      if (x == MIN_64x64) {</span>
+ 167 |     | <span class='neutral'>        require (y &gt;= -0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF &amp;&amp;</span>
+ 168 |     | <span class='neutral'>          y &lt;= 0x1000000000000000000000000000000000000000000000000);</span>
+ 169 |     | <span class='neutral'>        return -y &lt;&lt; 63;</span>
+ 170 |     | <span class='neutral'>      } else {</span>
+ 171 |     | <span class='neutral'>        bool negativeResult = false;</span>
+ 172 |     | <span class='neutral'>        if (x &lt; 0) {</span>
+ 173 |     | <span class='neutral'>          x = -x;</span>
+ 174 |     | <span class='neutral'>          negativeResult = true;</span>
+ 175 |     | <span class='neutral'>        }</span>
+ 176 |     | <span class='neutral'>        if (y &lt; 0) {</span>
+ 177 |     | <span class='neutral'>          y = -y; // We rely on overflow behavior here</span>
+ 178 |     | <span class='neutral'>          negativeResult = !negativeResult;</span>
+ 179 |     | <span class='neutral'>        }</span>
+ 180 |     | <span class='neutral'>        uint256 absoluteResult = mulu (x, uint256 (y));</span>
+ 181 |     | <span class='neutral'>        if (negativeResult) {</span>
+ 182 |     | <span class='neutral'>          require (absoluteResult &lt;=</span>
+ 183 |     | <span class='neutral'>            0x8000000000000000000000000000000000000000000000000000000000000000);</span>
+ 184 |     | <span class='neutral'>          return -int256 (absoluteResult); // We rely on overflow behavior here</span>
+ 185 |     | <span class='neutral'>        } else {</span>
+ 186 |     | <span class='neutral'>          require (absoluteResult &lt;=</span>
+ 187 |     | <span class='neutral'>            0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 188 |     | <span class='neutral'>          return int256 (absoluteResult);</span>
+ 189 |     | <span class='neutral'>        }</span>
+ 190 |     | <span class='neutral'>      }</span>
+ 191 |     | <span class='neutral'>    }</span>
+ 192 |     | <span class='neutral'>  }</span>
+ 193 |     | <span class='neutral'></span>
+ 194 |     | <span class='neutral'>  /**</span>
+ 195 |     | <span class='neutral'>   * Calculate x * y rounding down, where x is signed 64.64 fixed point number</span>
+ 196 |     | <span class='neutral'>   * and y is unsigned 256-bit integer number.  Revert on overflow.</span>
+ 197 |     | <span class='neutral'>   *</span>
+ 198 |     | <span class='neutral'>   * @param x signed 64.64 fixed point number</span>
+ 199 |     | <span class='neutral'>   * @param y unsigned 256-bit integer number</span>
+ 200 |     | <span class='neutral'>   * @return unsigned 256-bit integer number</span>
+ 201 |     | <span class='neutral'>   */</span>
+ 202 |     | <span class='neutral'>  function mulu (int128 x, uint256 y) internal pure returns (uint256) {</span>
+ 203 |     | <span class='neutral'>    unchecked {</span>
+ 204 |     | <span class='neutral'>      if (y == 0) return 0;</span>
+ 205 |     | <span class='neutral'></span>
+ 206 |     | <span class='neutral'>      require (x &gt;= 0);</span>
+ 207 |     | <span class='neutral'></span>
+ 208 |     | <span class='neutral'>      uint256 lo = (uint256 (int256 (x)) * (y &amp; 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)) &gt;&gt; 64;</span>
+ 209 |     | <span class='neutral'>      uint256 hi = uint256 (int256 (x)) * (y &gt;&gt; 128);</span>
+ 210 |     | <span class='neutral'></span>
+ 211 |     | <span class='neutral'>      require (hi &lt;= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 212 |     | <span class='neutral'>      hi &lt;&lt;= 64;</span>
+ 213 |     | <span class='neutral'></span>
+ 214 |     | <span class='neutral'>      require (hi &lt;=</span>
+ 215 |     | <span class='neutral'>        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - lo);</span>
+ 216 |     | <span class='neutral'>      return hi + lo;</span>
+ 217 |     | <span class='neutral'>    }</span>
+ 218 |     | <span class='neutral'>  }</span>
+ 219 |     | <span class='neutral'></span>
+ 220 |     | <span class='neutral'>  /**</span>
+ 221 |     | <span class='neutral'>   * Calculate x / y rounding towards zero.  Revert on overflow or when y is</span>
+ 222 |     | <span class='neutral'>   * zero.</span>
+ 223 |     | <span class='neutral'>   *</span>
+ 224 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 225 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 226 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 227 |     | <span class='neutral'>   */</span>
+ 228 | *   | <span class='executed'>  function div (int128 x, int128 y) internal pure returns (int128) {</span>
+ 229 |     | <span class='neutral'>    unchecked {</span>
+ 230 | *r  | <span class='executed'>      require (y != 0);</span>
+ 231 | *   | <span class='executed'>      int256 result = (int256 (x) &lt;&lt; 64) / y;</span>
+ 232 | *r  | <span class='executed'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 233 | *   | <span class='executed'>      return int128 (result);</span>
+ 234 |     | <span class='neutral'>    }</span>
+ 235 |     | <span class='neutral'>  }</span>
+ 236 |     | <span class='neutral'></span>
+ 237 |     | <span class='neutral'>  /**</span>
+ 238 |     | <span class='neutral'>   * Calculate x / y rounding towards zero, where x and y are signed 256-bit</span>
+ 239 |     | <span class='neutral'>   * integer numbers.  Revert on overflow or when y is zero.</span>
+ 240 |     | <span class='neutral'>   *</span>
+ 241 |     | <span class='neutral'>   * @param x signed 256-bit integer number</span>
+ 242 |     | <span class='neutral'>   * @param y signed 256-bit integer number</span>
+ 243 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 244 |     | <span class='neutral'>   */</span>
+ 245 |     | <span class='neutral'>  function divi (int256 x, int256 y) internal pure returns (int128) {</span>
+ 246 |     | <span class='neutral'>    unchecked {</span>
+ 247 |     | <span class='neutral'>      require (y != 0);</span>
+ 248 |     | <span class='neutral'></span>
+ 249 |     | <span class='neutral'>      bool negativeResult = false;</span>
+ 250 |     | <span class='neutral'>      if (x &lt; 0) {</span>
+ 251 |     | <span class='neutral'>        x = -x; // We rely on overflow behavior here</span>
+ 252 |     | <span class='neutral'>        negativeResult = true;</span>
+ 253 |     | <span class='neutral'>      }</span>
+ 254 |     | <span class='neutral'>      if (y &lt; 0) {</span>
+ 255 |     | <span class='neutral'>        y = -y; // We rely on overflow behavior here</span>
+ 256 |     | <span class='neutral'>        negativeResult = !negativeResult;</span>
+ 257 |     | <span class='neutral'>      }</span>
+ 258 |     | <span class='neutral'>      uint128 absoluteResult = divuu (uint256 (x), uint256 (y));</span>
+ 259 |     | <span class='neutral'>      if (negativeResult) {</span>
+ 260 |     | <span class='neutral'>        require (absoluteResult &lt;= 0x80000000000000000000000000000000);</span>
+ 261 |     | <span class='neutral'>        return -int128 (absoluteResult); // We rely on overflow behavior here</span>
+ 262 |     | <span class='neutral'>      } else {</span>
+ 263 |     | <span class='neutral'>        require (absoluteResult &lt;= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 264 |     | <span class='neutral'>        return int128 (absoluteResult); // We rely on overflow behavior here</span>
+ 265 |     | <span class='neutral'>      }</span>
+ 266 |     | <span class='neutral'>    }</span>
+ 267 |     | <span class='neutral'>  }</span>
+ 268 |     | <span class='neutral'></span>
+ 269 |     | <span class='neutral'>  /**</span>
+ 270 |     | <span class='neutral'>   * Calculate x / y rounding towards zero, where x and y are unsigned 256-bit</span>
+ 271 |     | <span class='neutral'>   * integer numbers.  Revert on overflow or when y is zero.</span>
+ 272 |     | <span class='neutral'>   *</span>
+ 273 |     | <span class='neutral'>   * @param x unsigned 256-bit integer number</span>
+ 274 |     | <span class='neutral'>   * @param y unsigned 256-bit integer number</span>
+ 275 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 276 |     | <span class='neutral'>   */</span>
+ 277 |     | <span class='neutral'>  function divu (uint256 x, uint256 y) internal pure returns (int128) {</span>
+ 278 |     | <span class='neutral'>    unchecked {</span>
+ 279 |     | <span class='neutral'>      require (y != 0);</span>
+ 280 |     | <span class='neutral'>      uint128 result = divuu (x, y);</span>
+ 281 |     | <span class='neutral'>      require (result &lt;= uint128 (MAX_64x64));</span>
+ 282 |     | <span class='neutral'>      return int128 (result);</span>
+ 283 |     | <span class='neutral'>    }</span>
+ 284 |     | <span class='neutral'>  }</span>
+ 285 |     | <span class='neutral'></span>
+ 286 |     | <span class='neutral'>  /**</span>
+ 287 |     | <span class='neutral'>   * Calculate -x.  Revert on overflow.</span>
+ 288 |     | <span class='neutral'>   *</span>
+ 289 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 290 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 291 |     | <span class='neutral'>   */</span>
+ 292 |     | <span class='neutral'>  function neg (int128 x) internal pure returns (int128) {</span>
+ 293 |     | <span class='neutral'>    unchecked {</span>
+ 294 |     | <span class='neutral'>      require (x != MIN_64x64);</span>
+ 295 |     | <span class='neutral'>      return -x;</span>
+ 296 |     | <span class='neutral'>    }</span>
+ 297 |     | <span class='neutral'>  }</span>
+ 298 |     | <span class='neutral'></span>
+ 299 |     | <span class='neutral'>  /**</span>
+ 300 |     | <span class='neutral'>   * Calculate |x|.  Revert on overflow.</span>
+ 301 |     | <span class='neutral'>   *</span>
+ 302 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 303 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 304 |     | <span class='neutral'>   */</span>
+ 305 | *   | <span class='executed'>  function abs (int128 x) internal pure returns (int128) {</span>
+ 306 |     | <span class='neutral'>    unchecked {</span>
+ 307 | *r  | <span class='executed'>      require (x != MIN_64x64);</span>
+ 308 | *   | <span class='executed'>      return x &lt; 0 ? -x : x;</span>
+ 309 |     | <span class='neutral'>    }</span>
+ 310 |     | <span class='neutral'>  }</span>
+ 311 |     | <span class='neutral'></span>
+ 312 |     | <span class='neutral'>  /**</span>
+ 313 |     | <span class='neutral'>   * Calculate 1 / x rounding towards zero.  Revert on overflow or when x is</span>
+ 314 |     | <span class='neutral'>   * zero.</span>
+ 315 |     | <span class='neutral'>   *</span>
+ 316 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 317 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 318 |     | <span class='neutral'>   */</span>
+ 319 |     | <span class='neutral'>  function inv (int128 x) internal pure returns (int128) {</span>
+ 320 |     | <span class='neutral'>    unchecked {</span>
+ 321 |     | <span class='neutral'>      require (x != 0);</span>
+ 322 |     | <span class='neutral'>      int256 result = int256 (0x100000000000000000000000000000000) / x;</span>
+ 323 |     | <span class='neutral'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 324 |     | <span class='neutral'>      return int128 (result);</span>
+ 325 |     | <span class='neutral'>    }</span>
+ 326 |     | <span class='neutral'>  }</span>
+ 327 |     | <span class='neutral'></span>
+ 328 |     | <span class='neutral'>  /**</span>
+ 329 |     | <span class='neutral'>   * Calculate arithmetics average of x and y, i.e. (x + y) / 2 rounding down.</span>
+ 330 |     | <span class='neutral'>   *</span>
+ 331 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 332 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 333 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 334 |     | <span class='neutral'>   */</span>
+ 335 |     | <span class='neutral'>  function avg (int128 x, int128 y) internal pure returns (int128) {</span>
+ 336 |     | <span class='neutral'>    unchecked {</span>
+ 337 |     | <span class='neutral'>      return int128 ((int256 (x) + int256 (y)) &gt;&gt; 1);</span>
+ 338 |     | <span class='neutral'>    }</span>
+ 339 |     | <span class='neutral'>  }</span>
+ 340 |     | <span class='neutral'></span>
+ 341 |     | <span class='neutral'>  /**</span>
+ 342 |     | <span class='neutral'>   * Calculate geometric average of x and y, i.e. sqrt (x * y) rounding down.</span>
+ 343 |     | <span class='neutral'>   * Revert on overflow or in case x * y is negative.</span>
+ 344 |     | <span class='neutral'>   *</span>
+ 345 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 346 |     | <span class='neutral'>   * @param y signed 64.64-bit fixed point number</span>
+ 347 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 348 |     | <span class='neutral'>   */</span>
+ 349 |     | <span class='neutral'>  function gavg (int128 x, int128 y) internal pure returns (int128) {</span>
+ 350 |     | <span class='neutral'>    unchecked {</span>
+ 351 |     | <span class='neutral'>      int256 m = int256 (x) * int256 (y);</span>
+ 352 |     | <span class='neutral'>      require (m &gt;= 0);</span>
+ 353 |     | <span class='neutral'>      require (m &lt;</span>
+ 354 |     | <span class='neutral'>          0x4000000000000000000000000000000000000000000000000000000000000000);</span>
+ 355 |     | <span class='neutral'>      return int128 (sqrtu (uint256 (m)));</span>
+ 356 |     | <span class='neutral'>    }</span>
+ 357 |     | <span class='neutral'>  }</span>
+ 358 |     | <span class='neutral'></span>
+ 359 |     | <span class='neutral'>  /**</span>
+ 360 |     | <span class='neutral'>   * Calculate x^y assuming 0^0 is 1, where x is signed 64.64 fixed point number</span>
+ 361 |     | <span class='neutral'>   * and y is unsigned 256-bit integer number.  Revert on overflow.</span>
+ 362 |     | <span class='neutral'>   *</span>
+ 363 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 364 |     | <span class='neutral'>   * @param y uint256 value</span>
+ 365 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 366 |     | <span class='neutral'>   */</span>
+ 367 |     | <span class='neutral'>  function pow (int128 x, uint256 y) internal pure returns (int128) {</span>
+ 368 |     | <span class='neutral'>    unchecked {</span>
+ 369 |     | <span class='neutral'>      bool negative = x &lt; 0 &amp;&amp; y &amp; 1 == 1;</span>
+ 370 |     | <span class='neutral'></span>
+ 371 |     | <span class='neutral'>      uint256 absX = uint128 (x &lt; 0 ? -x : x);</span>
+ 372 |     | <span class='neutral'>      uint256 absResult;</span>
+ 373 |     | <span class='neutral'>      absResult = 0x100000000000000000000000000000000;</span>
+ 374 |     | <span class='neutral'></span>
+ 375 |     | <span class='neutral'>      if (absX &lt;= 0x10000000000000000) {</span>
+ 376 |     | <span class='neutral'>        absX &lt;&lt;= 63;</span>
+ 377 |     | <span class='neutral'>        while (y != 0) {</span>
+ 378 |     | <span class='neutral'>          if (y &amp; 0x1 != 0) {</span>
+ 379 |     | <span class='neutral'>            absResult = absResult * absX &gt;&gt; 127;</span>
+ 380 |     | <span class='neutral'>          }</span>
+ 381 |     | <span class='neutral'>          absX = absX * absX &gt;&gt; 127;</span>
+ 382 |     | <span class='neutral'></span>
+ 383 |     | <span class='neutral'>          if (y &amp; 0x2 != 0) {</span>
+ 384 |     | <span class='neutral'>            absResult = absResult * absX &gt;&gt; 127;</span>
+ 385 |     | <span class='neutral'>          }</span>
+ 386 |     | <span class='neutral'>          absX = absX * absX &gt;&gt; 127;</span>
+ 387 |     | <span class='neutral'></span>
+ 388 |     | <span class='neutral'>          if (y &amp; 0x4 != 0) {</span>
+ 389 |     | <span class='neutral'>            absResult = absResult * absX &gt;&gt; 127;</span>
+ 390 |     | <span class='neutral'>          }</span>
+ 391 |     | <span class='neutral'>          absX = absX * absX &gt;&gt; 127;</span>
+ 392 |     | <span class='neutral'></span>
+ 393 |     | <span class='neutral'>          if (y &amp; 0x8 != 0) {</span>
+ 394 |     | <span class='neutral'>            absResult = absResult * absX &gt;&gt; 127;</span>
+ 395 |     | <span class='neutral'>          }</span>
+ 396 |     | <span class='neutral'>          absX = absX * absX &gt;&gt; 127;</span>
+ 397 |     | <span class='neutral'></span>
+ 398 |     | <span class='neutral'>          y &gt;&gt;= 4;</span>
+ 399 |     | <span class='neutral'>        }</span>
+ 400 |     | <span class='neutral'></span>
+ 401 |     | <span class='neutral'>        absResult &gt;&gt;= 64;</span>
+ 402 |     | <span class='neutral'>      } else {</span>
+ 403 |     | <span class='neutral'>        uint256 absXShift = 63;</span>
+ 404 |     | <span class='neutral'>        if (absX &lt; 0x1000000000000000000000000) { absX &lt;&lt;= 32; absXShift -= 32; }</span>
+ 405 |     | <span class='neutral'>        if (absX &lt; 0x10000000000000000000000000000) { absX &lt;&lt;= 16; absXShift -= 16; }</span>
+ 406 |     | <span class='neutral'>        if (absX &lt; 0x1000000000000000000000000000000) { absX &lt;&lt;= 8; absXShift -= 8; }</span>
+ 407 |     | <span class='neutral'>        if (absX &lt; 0x10000000000000000000000000000000) { absX &lt;&lt;= 4; absXShift -= 4; }</span>
+ 408 |     | <span class='neutral'>        if (absX &lt; 0x40000000000000000000000000000000) { absX &lt;&lt;= 2; absXShift -= 2; }</span>
+ 409 |     | <span class='neutral'>        if (absX &lt; 0x80000000000000000000000000000000) { absX &lt;&lt;= 1; absXShift -= 1; }</span>
+ 410 |     | <span class='neutral'></span>
+ 411 |     | <span class='neutral'>        uint256 resultShift = 0;</span>
+ 412 |     | <span class='neutral'>        while (y != 0) {</span>
+ 413 |     | <span class='neutral'>          require (absXShift &lt; 64);</span>
+ 414 |     | <span class='neutral'></span>
+ 415 |     | <span class='neutral'>          if (y &amp; 0x1 != 0) {</span>
+ 416 |     | <span class='neutral'>            absResult = absResult * absX &gt;&gt; 127;</span>
+ 417 |     | <span class='neutral'>            resultShift += absXShift;</span>
+ 418 |     | <span class='neutral'>            if (absResult &gt; 0x100000000000000000000000000000000) {</span>
+ 419 |     | <span class='neutral'>              absResult &gt;&gt;= 1;</span>
+ 420 |     | <span class='neutral'>              resultShift += 1;</span>
+ 421 |     | <span class='neutral'>            }</span>
+ 422 |     | <span class='neutral'>          }</span>
+ 423 |     | <span class='neutral'>          absX = absX * absX &gt;&gt; 127;</span>
+ 424 |     | <span class='neutral'>          absXShift &lt;&lt;= 1;</span>
+ 425 |     | <span class='neutral'>          if (absX &gt;= 0x100000000000000000000000000000000) {</span>
+ 426 |     | <span class='neutral'>              absX &gt;&gt;= 1;</span>
+ 427 |     | <span class='neutral'>              absXShift += 1;</span>
+ 428 |     | <span class='neutral'>          }</span>
+ 429 |     | <span class='neutral'></span>
+ 430 |     | <span class='neutral'>          y &gt;&gt;= 1;</span>
+ 431 |     | <span class='neutral'>        }</span>
+ 432 |     | <span class='neutral'></span>
+ 433 |     | <span class='neutral'>        require (resultShift &lt; 64);</span>
+ 434 |     | <span class='neutral'>        absResult &gt;&gt;= 64 - resultShift;</span>
+ 435 |     | <span class='neutral'>      }</span>
+ 436 |     | <span class='neutral'>      int256 result = negative ? -int256 (absResult) : int256 (absResult);</span>
+ 437 |     | <span class='neutral'>      require (result &gt;= MIN_64x64 &amp;&amp; result &lt;= MAX_64x64);</span>
+ 438 |     | <span class='neutral'>      return int128 (result);</span>
+ 439 |     | <span class='neutral'>    }</span>
+ 440 |     | <span class='neutral'>  }</span>
+ 441 |     | <span class='neutral'></span>
+ 442 |     | <span class='neutral'>  /**</span>
+ 443 |     | <span class='neutral'>   * Calculate sqrt (x) rounding down.  Revert if x &lt; 0.</span>
+ 444 |     | <span class='neutral'>   *</span>
+ 445 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 446 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 447 |     | <span class='neutral'>   */</span>
+ 448 |     | <span class='neutral'>  function sqrt (int128 x) internal pure returns (int128) {</span>
+ 449 |     | <span class='neutral'>    unchecked {</span>
+ 450 |     | <span class='neutral'>      require (x &gt;= 0);</span>
+ 451 |     | <span class='neutral'>      return int128 (sqrtu (uint256 (int256 (x)) &lt;&lt; 64));</span>
+ 452 |     | <span class='neutral'>    }</span>
+ 453 |     | <span class='neutral'>  }</span>
+ 454 |     | <span class='neutral'></span>
+ 455 |     | <span class='neutral'>  /**</span>
+ 456 |     | <span class='neutral'>   * Calculate binary logarithm of x.  Revert if x &lt;= 0.</span>
+ 457 |     | <span class='neutral'>   *</span>
+ 458 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 459 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 460 |     | <span class='neutral'>   */</span>
+ 461 | *   | <span class='executed'>  function log_2 (int128 x) internal pure returns (int128) {</span>
+ 462 |     | <span class='neutral'>    unchecked {</span>
+ 463 | *r  | <span class='executed'>      require (x &gt; 0);</span>
+ 464 |     | <span class='neutral'></span>
+ 465 | *   | <span class='executed'>      int256 msb = 0;</span>
+ 466 | *   | <span class='executed'>      int256 xc = x;</span>
+ 467 | *   | <span class='executed'>      if (xc &gt;= 0x10000000000000000) { xc &gt;&gt;= 64; msb += 64; }</span>
+ 468 | *   | <span class='executed'>      if (xc &gt;= 0x100000000) { xc &gt;&gt;= 32; msb += 32; }</span>
+ 469 | *   | <span class='executed'>      if (xc &gt;= 0x10000) { xc &gt;&gt;= 16; msb += 16; }</span>
+ 470 | *   | <span class='executed'>      if (xc &gt;= 0x100) { xc &gt;&gt;= 8; msb += 8; }</span>
+ 471 | *   | <span class='executed'>      if (xc &gt;= 0x10) { xc &gt;&gt;= 4; msb += 4; }</span>
+ 472 | *   | <span class='executed'>      if (xc &gt;= 0x4) { xc &gt;&gt;= 2; msb += 2; }</span>
+ 473 | *   | <span class='executed'>      if (xc &gt;= 0x2) msb += 1;  // No need to shift xc anymore</span>
+ 474 |     | <span class='neutral'></span>
+ 475 | *   | <span class='executed'>      int256 result = msb - 64 &lt;&lt; 64;</span>
+ 476 | *   | <span class='executed'>      uint256 ux = uint256 (int256 (x)) &lt;&lt; uint256 (127 - msb);</span>
+ 477 | *   | <span class='executed'>      for (int256 bit = 0x8000000000000000; bit &gt; 0; bit &gt;&gt;= 1) {</span>
+ 478 | *   | <span class='executed'>        ux *= ux;</span>
+ 479 | *   | <span class='executed'>        uint256 b = ux &gt;&gt; 255;</span>
+ 480 | *   | <span class='executed'>        ux &gt;&gt;= 127 + b;</span>
+ 481 | *   | <span class='executed'>        result += bit * int256 (b);</span>
+ 482 |     | <span class='neutral'>      }</span>
+ 483 |     | <span class='neutral'></span>
+ 484 | *   | <span class='executed'>      return int128 (result);</span>
+ 485 |     | <span class='neutral'>    }</span>
+ 486 |     | <span class='neutral'>  }</span>
+ 487 |     | <span class='neutral'></span>
+ 488 |     | <span class='neutral'>  /**</span>
+ 489 |     | <span class='neutral'>   * Calculate natural logarithm of x.  Revert if x &lt;= 0.</span>
+ 490 |     | <span class='neutral'>   *</span>
+ 491 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 492 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 493 |     | <span class='neutral'>   */</span>
+ 494 |     | <span class='neutral'>  function ln (int128 x) internal pure returns (int128) {</span>
+ 495 |     | <span class='neutral'>    unchecked {</span>
+ 496 |     | <span class='neutral'>      require (x &gt; 0);</span>
+ 497 |     | <span class='neutral'></span>
+ 498 |     | <span class='neutral'>      return int128 (int256 (</span>
+ 499 |     | <span class='neutral'>          uint256 (int256 (log_2 (x))) * 0xB17217F7D1CF79ABC9E3B39803F2F6AF &gt;&gt; 128));</span>
+ 500 |     | <span class='neutral'>    }</span>
+ 501 |     | <span class='neutral'>  }</span>
+ 502 |     | <span class='neutral'></span>
+ 503 |     | <span class='neutral'>  /**</span>
+ 504 |     | <span class='neutral'>   * Calculate binary exponent of x.  Revert on overflow.</span>
+ 505 |     | <span class='neutral'>   *</span>
+ 506 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 507 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 508 |     | <span class='neutral'>   */</span>
+ 509 |     | <span class='neutral'>  function exp_2 (int128 x) internal pure returns (int128) {</span>
+ 510 |     | <span class='neutral'>    unchecked {</span>
+ 511 |     | <span class='neutral'>      require (x &lt; 0x400000000000000000); // Overflow</span>
+ 512 |     | <span class='neutral'></span>
+ 513 |     | <span class='neutral'>      if (x &lt; -0x400000000000000000) return 0; // Underflow</span>
+ 514 |     | <span class='neutral'></span>
+ 515 |     | <span class='neutral'>      uint256 result = 0x80000000000000000000000000000000;</span>
+ 516 |     | <span class='neutral'></span>
+ 517 |     | <span class='neutral'>      if (x &amp; 0x8000000000000000 &gt; 0)</span>
+ 518 |     | <span class='neutral'>        result = result * 0x16A09E667F3BCC908B2FB1366EA957D3E &gt;&gt; 128;</span>
+ 519 |     | <span class='neutral'>      if (x &amp; 0x4000000000000000 &gt; 0)</span>
+ 520 |     | <span class='neutral'>        result = result * 0x1306FE0A31B7152DE8D5A46305C85EDEC &gt;&gt; 128;</span>
+ 521 |     | <span class='neutral'>      if (x &amp; 0x2000000000000000 &gt; 0)</span>
+ 522 |     | <span class='neutral'>        result = result * 0x1172B83C7D517ADCDF7C8C50EB14A791F &gt;&gt; 128;</span>
+ 523 |     | <span class='neutral'>      if (x &amp; 0x1000000000000000 &gt; 0)</span>
+ 524 |     | <span class='neutral'>        result = result * 0x10B5586CF9890F6298B92B71842A98363 &gt;&gt; 128;</span>
+ 525 |     | <span class='neutral'>      if (x &amp; 0x800000000000000 &gt; 0)</span>
+ 526 |     | <span class='neutral'>        result = result * 0x1059B0D31585743AE7C548EB68CA417FD &gt;&gt; 128;</span>
+ 527 |     | <span class='neutral'>      if (x &amp; 0x400000000000000 &gt; 0)</span>
+ 528 |     | <span class='neutral'>        result = result * 0x102C9A3E778060EE6F7CACA4F7A29BDE8 &gt;&gt; 128;</span>
+ 529 |     | <span class='neutral'>      if (x &amp; 0x200000000000000 &gt; 0)</span>
+ 530 |     | <span class='neutral'>        result = result * 0x10163DA9FB33356D84A66AE336DCDFA3F &gt;&gt; 128;</span>
+ 531 |     | <span class='neutral'>      if (x &amp; 0x100000000000000 &gt; 0)</span>
+ 532 |     | <span class='neutral'>        result = result * 0x100B1AFA5ABCBED6129AB13EC11DC9543 &gt;&gt; 128;</span>
+ 533 |     | <span class='neutral'>      if (x &amp; 0x80000000000000 &gt; 0)</span>
+ 534 |     | <span class='neutral'>        result = result * 0x10058C86DA1C09EA1FF19D294CF2F679B &gt;&gt; 128;</span>
+ 535 |     | <span class='neutral'>      if (x &amp; 0x40000000000000 &gt; 0)</span>
+ 536 |     | <span class='neutral'>        result = result * 0x1002C605E2E8CEC506D21BFC89A23A00F &gt;&gt; 128;</span>
+ 537 |     | <span class='neutral'>      if (x &amp; 0x20000000000000 &gt; 0)</span>
+ 538 |     | <span class='neutral'>        result = result * 0x100162F3904051FA128BCA9C55C31E5DF &gt;&gt; 128;</span>
+ 539 |     | <span class='neutral'>      if (x &amp; 0x10000000000000 &gt; 0)</span>
+ 540 |     | <span class='neutral'>        result = result * 0x1000B175EFFDC76BA38E31671CA939725 &gt;&gt; 128;</span>
+ 541 |     | <span class='neutral'>      if (x &amp; 0x8000000000000 &gt; 0)</span>
+ 542 |     | <span class='neutral'>        result = result * 0x100058BA01FB9F96D6CACD4B180917C3D &gt;&gt; 128;</span>
+ 543 |     | <span class='neutral'>      if (x &amp; 0x4000000000000 &gt; 0)</span>
+ 544 |     | <span class='neutral'>        result = result * 0x10002C5CC37DA9491D0985C348C68E7B3 &gt;&gt; 128;</span>
+ 545 |     | <span class='neutral'>      if (x &amp; 0x2000000000000 &gt; 0)</span>
+ 546 |     | <span class='neutral'>        result = result * 0x1000162E525EE054754457D5995292026 &gt;&gt; 128;</span>
+ 547 |     | <span class='neutral'>      if (x &amp; 0x1000000000000 &gt; 0)</span>
+ 548 |     | <span class='neutral'>        result = result * 0x10000B17255775C040618BF4A4ADE83FC &gt;&gt; 128;</span>
+ 549 |     | <span class='neutral'>      if (x &amp; 0x800000000000 &gt; 0)</span>
+ 550 |     | <span class='neutral'>        result = result * 0x1000058B91B5BC9AE2EED81E9B7D4CFAB &gt;&gt; 128;</span>
+ 551 |     | <span class='neutral'>      if (x &amp; 0x400000000000 &gt; 0)</span>
+ 552 |     | <span class='neutral'>        result = result * 0x100002C5C89D5EC6CA4D7C8ACC017B7C9 &gt;&gt; 128;</span>
+ 553 |     | <span class='neutral'>      if (x &amp; 0x200000000000 &gt; 0)</span>
+ 554 |     | <span class='neutral'>        result = result * 0x10000162E43F4F831060E02D839A9D16D &gt;&gt; 128;</span>
+ 555 |     | <span class='neutral'>      if (x &amp; 0x100000000000 &gt; 0)</span>
+ 556 |     | <span class='neutral'>        result = result * 0x100000B1721BCFC99D9F890EA06911763 &gt;&gt; 128;</span>
+ 557 |     | <span class='neutral'>      if (x &amp; 0x80000000000 &gt; 0)</span>
+ 558 |     | <span class='neutral'>        result = result * 0x10000058B90CF1E6D97F9CA14DBCC1628 &gt;&gt; 128;</span>
+ 559 |     | <span class='neutral'>      if (x &amp; 0x40000000000 &gt; 0)</span>
+ 560 |     | <span class='neutral'>        result = result * 0x1000002C5C863B73F016468F6BAC5CA2B &gt;&gt; 128;</span>
+ 561 |     | <span class='neutral'>      if (x &amp; 0x20000000000 &gt; 0)</span>
+ 562 |     | <span class='neutral'>        result = result * 0x100000162E430E5A18F6119E3C02282A5 &gt;&gt; 128;</span>
+ 563 |     | <span class='neutral'>      if (x &amp; 0x10000000000 &gt; 0)</span>
+ 564 |     | <span class='neutral'>        result = result * 0x1000000B1721835514B86E6D96EFD1BFE &gt;&gt; 128;</span>
+ 565 |     | <span class='neutral'>      if (x &amp; 0x8000000000 &gt; 0)</span>
+ 566 |     | <span class='neutral'>        result = result * 0x100000058B90C0B48C6BE5DF846C5B2EF &gt;&gt; 128;</span>
+ 567 |     | <span class='neutral'>      if (x &amp; 0x4000000000 &gt; 0)</span>
+ 568 |     | <span class='neutral'>        result = result * 0x10000002C5C8601CC6B9E94213C72737A &gt;&gt; 128;</span>
+ 569 |     | <span class='neutral'>      if (x &amp; 0x2000000000 &gt; 0)</span>
+ 570 |     | <span class='neutral'>        result = result * 0x1000000162E42FFF037DF38AA2B219F06 &gt;&gt; 128;</span>
+ 571 |     | <span class='neutral'>      if (x &amp; 0x1000000000 &gt; 0)</span>
+ 572 |     | <span class='neutral'>        result = result * 0x10000000B17217FBA9C739AA5819F44F9 &gt;&gt; 128;</span>
+ 573 |     | <span class='neutral'>      if (x &amp; 0x800000000 &gt; 0)</span>
+ 574 |     | <span class='neutral'>        result = result * 0x1000000058B90BFCDEE5ACD3C1CEDC823 &gt;&gt; 128;</span>
+ 575 |     | <span class='neutral'>      if (x &amp; 0x400000000 &gt; 0)</span>
+ 576 |     | <span class='neutral'>        result = result * 0x100000002C5C85FE31F35A6A30DA1BE50 &gt;&gt; 128;</span>
+ 577 |     | <span class='neutral'>      if (x &amp; 0x200000000 &gt; 0)</span>
+ 578 |     | <span class='neutral'>        result = result * 0x10000000162E42FF0999CE3541B9FFFCF &gt;&gt; 128;</span>
+ 579 |     | <span class='neutral'>      if (x &amp; 0x100000000 &gt; 0)</span>
+ 580 |     | <span class='neutral'>        result = result * 0x100000000B17217F80F4EF5AADDA45554 &gt;&gt; 128;</span>
+ 581 |     | <span class='neutral'>      if (x &amp; 0x80000000 &gt; 0)</span>
+ 582 |     | <span class='neutral'>        result = result * 0x10000000058B90BFBF8479BD5A81B51AD &gt;&gt; 128;</span>
+ 583 |     | <span class='neutral'>      if (x &amp; 0x40000000 &gt; 0)</span>
+ 584 |     | <span class='neutral'>        result = result * 0x1000000002C5C85FDF84BD62AE30A74CC &gt;&gt; 128;</span>
+ 585 |     | <span class='neutral'>      if (x &amp; 0x20000000 &gt; 0)</span>
+ 586 |     | <span class='neutral'>        result = result * 0x100000000162E42FEFB2FED257559BDAA &gt;&gt; 128;</span>
+ 587 |     | <span class='neutral'>      if (x &amp; 0x10000000 &gt; 0)</span>
+ 588 |     | <span class='neutral'>        result = result * 0x1000000000B17217F7D5A7716BBA4A9AE &gt;&gt; 128;</span>
+ 589 |     | <span class='neutral'>      if (x &amp; 0x8000000 &gt; 0)</span>
+ 590 |     | <span class='neutral'>        result = result * 0x100000000058B90BFBE9DDBAC5E109CCE &gt;&gt; 128;</span>
+ 591 |     | <span class='neutral'>      if (x &amp; 0x4000000 &gt; 0)</span>
+ 592 |     | <span class='neutral'>        result = result * 0x10000000002C5C85FDF4B15DE6F17EB0D &gt;&gt; 128;</span>
+ 593 |     | <span class='neutral'>      if (x &amp; 0x2000000 &gt; 0)</span>
+ 594 |     | <span class='neutral'>        result = result * 0x1000000000162E42FEFA494F1478FDE05 &gt;&gt; 128;</span>
+ 595 |     | <span class='neutral'>      if (x &amp; 0x1000000 &gt; 0)</span>
+ 596 |     | <span class='neutral'>        result = result * 0x10000000000B17217F7D20CF927C8E94C &gt;&gt; 128;</span>
+ 597 |     | <span class='neutral'>      if (x &amp; 0x800000 &gt; 0)</span>
+ 598 |     | <span class='neutral'>        result = result * 0x1000000000058B90BFBE8F71CB4E4B33D &gt;&gt; 128;</span>
+ 599 |     | <span class='neutral'>      if (x &amp; 0x400000 &gt; 0)</span>
+ 600 |     | <span class='neutral'>        result = result * 0x100000000002C5C85FDF477B662B26945 &gt;&gt; 128;</span>
+ 601 |     | <span class='neutral'>      if (x &amp; 0x200000 &gt; 0)</span>
+ 602 |     | <span class='neutral'>        result = result * 0x10000000000162E42FEFA3AE53369388C &gt;&gt; 128;</span>
+ 603 |     | <span class='neutral'>      if (x &amp; 0x100000 &gt; 0)</span>
+ 604 |     | <span class='neutral'>        result = result * 0x100000000000B17217F7D1D351A389D40 &gt;&gt; 128;</span>
+ 605 |     | <span class='neutral'>      if (x &amp; 0x80000 &gt; 0)</span>
+ 606 |     | <span class='neutral'>        result = result * 0x10000000000058B90BFBE8E8B2D3D4EDE &gt;&gt; 128;</span>
+ 607 |     | <span class='neutral'>      if (x &amp; 0x40000 &gt; 0)</span>
+ 608 |     | <span class='neutral'>        result = result * 0x1000000000002C5C85FDF4741BEA6E77E &gt;&gt; 128;</span>
+ 609 |     | <span class='neutral'>      if (x &amp; 0x20000 &gt; 0)</span>
+ 610 |     | <span class='neutral'>        result = result * 0x100000000000162E42FEFA39FE95583C2 &gt;&gt; 128;</span>
+ 611 |     | <span class='neutral'>      if (x &amp; 0x10000 &gt; 0)</span>
+ 612 |     | <span class='neutral'>        result = result * 0x1000000000000B17217F7D1CFB72B45E1 &gt;&gt; 128;</span>
+ 613 |     | <span class='neutral'>      if (x &amp; 0x8000 &gt; 0)</span>
+ 614 |     | <span class='neutral'>        result = result * 0x100000000000058B90BFBE8E7CC35C3F0 &gt;&gt; 128;</span>
+ 615 |     | <span class='neutral'>      if (x &amp; 0x4000 &gt; 0)</span>
+ 616 |     | <span class='neutral'>        result = result * 0x10000000000002C5C85FDF473E242EA38 &gt;&gt; 128;</span>
+ 617 |     | <span class='neutral'>      if (x &amp; 0x2000 &gt; 0)</span>
+ 618 |     | <span class='neutral'>        result = result * 0x1000000000000162E42FEFA39F02B772C &gt;&gt; 128;</span>
+ 619 |     | <span class='neutral'>      if (x &amp; 0x1000 &gt; 0)</span>
+ 620 |     | <span class='neutral'>        result = result * 0x10000000000000B17217F7D1CF7D83C1A &gt;&gt; 128;</span>
+ 621 |     | <span class='neutral'>      if (x &amp; 0x800 &gt; 0)</span>
+ 622 |     | <span class='neutral'>        result = result * 0x1000000000000058B90BFBE8E7BDCBE2E &gt;&gt; 128;</span>
+ 623 |     | <span class='neutral'>      if (x &amp; 0x400 &gt; 0)</span>
+ 624 |     | <span class='neutral'>        result = result * 0x100000000000002C5C85FDF473DEA871F &gt;&gt; 128;</span>
+ 625 |     | <span class='neutral'>      if (x &amp; 0x200 &gt; 0)</span>
+ 626 |     | <span class='neutral'>        result = result * 0x10000000000000162E42FEFA39EF44D91 &gt;&gt; 128;</span>
+ 627 |     | <span class='neutral'>      if (x &amp; 0x100 &gt; 0)</span>
+ 628 |     | <span class='neutral'>        result = result * 0x100000000000000B17217F7D1CF79E949 &gt;&gt; 128;</span>
+ 629 |     | <span class='neutral'>      if (x &amp; 0x80 &gt; 0)</span>
+ 630 |     | <span class='neutral'>        result = result * 0x10000000000000058B90BFBE8E7BCE544 &gt;&gt; 128;</span>
+ 631 |     | <span class='neutral'>      if (x &amp; 0x40 &gt; 0)</span>
+ 632 |     | <span class='neutral'>        result = result * 0x1000000000000002C5C85FDF473DE6ECA &gt;&gt; 128;</span>
+ 633 |     | <span class='neutral'>      if (x &amp; 0x20 &gt; 0)</span>
+ 634 |     | <span class='neutral'>        result = result * 0x100000000000000162E42FEFA39EF366F &gt;&gt; 128;</span>
+ 635 |     | <span class='neutral'>      if (x &amp; 0x10 &gt; 0)</span>
+ 636 |     | <span class='neutral'>        result = result * 0x1000000000000000B17217F7D1CF79AFA &gt;&gt; 128;</span>
+ 637 |     | <span class='neutral'>      if (x &amp; 0x8 &gt; 0)</span>
+ 638 |     | <span class='neutral'>        result = result * 0x100000000000000058B90BFBE8E7BCD6D &gt;&gt; 128;</span>
+ 639 |     | <span class='neutral'>      if (x &amp; 0x4 &gt; 0)</span>
+ 640 |     | <span class='neutral'>        result = result * 0x10000000000000002C5C85FDF473DE6B2 &gt;&gt; 128;</span>
+ 641 |     | <span class='neutral'>      if (x &amp; 0x2 &gt; 0)</span>
+ 642 |     | <span class='neutral'>        result = result * 0x1000000000000000162E42FEFA39EF358 &gt;&gt; 128;</span>
+ 643 |     | <span class='neutral'>      if (x &amp; 0x1 &gt; 0)</span>
+ 644 |     | <span class='neutral'>        result = result * 0x10000000000000000B17217F7D1CF79AB &gt;&gt; 128;</span>
+ 645 |     | <span class='neutral'></span>
+ 646 |     | <span class='neutral'>      result &gt;&gt;= uint256 (int256 (63 - (x &gt;&gt; 64)));</span>
+ 647 |     | <span class='neutral'>      require (result &lt;= uint256 (int256 (MAX_64x64)));</span>
+ 648 |     | <span class='neutral'></span>
+ 649 |     | <span class='neutral'>      return int128 (int256 (result));</span>
+ 650 |     | <span class='neutral'>    }</span>
+ 651 |     | <span class='neutral'>  }</span>
+ 652 |     | <span class='neutral'></span>
+ 653 |     | <span class='neutral'>  /**</span>
+ 654 |     | <span class='neutral'>   * Calculate natural exponent of x.  Revert on overflow.</span>
+ 655 |     | <span class='neutral'>   *</span>
+ 656 |     | <span class='neutral'>   * @param x signed 64.64-bit fixed point number</span>
+ 657 |     | <span class='neutral'>   * @return signed 64.64-bit fixed point number</span>
+ 658 |     | <span class='neutral'>   */</span>
+ 659 |     | <span class='neutral'>  function exp (int128 x) internal pure returns (int128) {</span>
+ 660 |     | <span class='neutral'>    unchecked {</span>
+ 661 |     | <span class='neutral'>      require (x &lt; 0x400000000000000000); // Overflow</span>
+ 662 |     | <span class='neutral'></span>
+ 663 |     | <span class='neutral'>      if (x &lt; -0x400000000000000000) return 0; // Underflow</span>
+ 664 |     | <span class='neutral'></span>
+ 665 |     | <span class='neutral'>      return exp_2 (</span>
+ 666 |     | <span class='neutral'>          int128 (int256 (x) * 0x171547652B82FE1777D0FFDA0D23A7D12 &gt;&gt; 128));</span>
+ 667 |     | <span class='neutral'>    }</span>
+ 668 |     | <span class='neutral'>  }</span>
+ 669 |     | <span class='neutral'></span>
+ 670 |     | <span class='neutral'>  /**</span>
+ 671 |     | <span class='neutral'>   * Calculate x / y rounding towards zero, where x and y are unsigned 256-bit</span>
+ 672 |     | <span class='neutral'>   * integer numbers.  Revert on overflow or when y is zero.</span>
+ 673 |     | <span class='neutral'>   *</span>
+ 674 |     | <span class='neutral'>   * @param x unsigned 256-bit integer number</span>
+ 675 |     | <span class='neutral'>   * @param y unsigned 256-bit integer number</span>
+ 676 |     | <span class='neutral'>   * @return unsigned 64.64-bit fixed point number</span>
+ 677 |     | <span class='neutral'>   */</span>
+ 678 |     | <span class='neutral'>  function divuu (uint256 x, uint256 y) private pure returns (uint128) {</span>
+ 679 |     | <span class='neutral'>    unchecked {</span>
+ 680 |     | <span class='neutral'>      require (y != 0);</span>
+ 681 |     | <span class='neutral'></span>
+ 682 |     | <span class='neutral'>      uint256 result;</span>
+ 683 |     | <span class='neutral'></span>
+ 684 |     | <span class='neutral'>      if (x &lt;= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)</span>
+ 685 |     | <span class='neutral'>        result = (x &lt;&lt; 64) / y;</span>
+ 686 |     | <span class='neutral'>      else {</span>
+ 687 |     | <span class='neutral'>        uint256 msb = 192;</span>
+ 688 |     | <span class='neutral'>        uint256 xc = x &gt;&gt; 192;</span>
+ 689 |     | <span class='neutral'>        if (xc &gt;= 0x100000000) { xc &gt;&gt;= 32; msb += 32; }</span>
+ 690 |     | <span class='neutral'>        if (xc &gt;= 0x10000) { xc &gt;&gt;= 16; msb += 16; }</span>
+ 691 |     | <span class='neutral'>        if (xc &gt;= 0x100) { xc &gt;&gt;= 8; msb += 8; }</span>
+ 692 |     | <span class='neutral'>        if (xc &gt;= 0x10) { xc &gt;&gt;= 4; msb += 4; }</span>
+ 693 |     | <span class='neutral'>        if (xc &gt;= 0x4) { xc &gt;&gt;= 2; msb += 2; }</span>
+ 694 |     | <span class='neutral'>        if (xc &gt;= 0x2) msb += 1;  // No need to shift xc anymore</span>
+ 695 |     | <span class='neutral'></span>
+ 696 |     | <span class='neutral'>        result = (x &lt;&lt; 255 - msb) / ((y - 1 &gt;&gt; msb - 191) + 1);</span>
+ 697 |     | <span class='neutral'>        require (result &lt;= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 698 |     | <span class='neutral'></span>
+ 699 |     | <span class='neutral'>        uint256 hi = result * (y &gt;&gt; 128);</span>
+ 700 |     | <span class='neutral'>        uint256 lo = result * (y &amp; 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 701 |     | <span class='neutral'></span>
+ 702 |     | <span class='neutral'>        uint256 xh = x &gt;&gt; 192;</span>
+ 703 |     | <span class='neutral'>        uint256 xl = x &lt;&lt; 64;</span>
+ 704 |     | <span class='neutral'></span>
+ 705 |     | <span class='neutral'>        if (xl &lt; lo) xh -= 1;</span>
+ 706 |     | <span class='neutral'>        xl -= lo; // We rely on overflow behavior here</span>
+ 707 |     | <span class='neutral'>        lo = hi &lt;&lt; 128;</span>
+ 708 |     | <span class='neutral'>        if (xl &lt; lo) xh -= 1;</span>
+ 709 |     | <span class='neutral'>        xl -= lo; // We rely on overflow behavior here</span>
+ 710 |     | <span class='neutral'></span>
+ 711 |     | <span class='neutral'>        require (xh == hi &gt;&gt; 128);</span>
+ 712 |     | <span class='neutral'></span>
+ 713 |     | <span class='neutral'>        result += xl / y;</span>
+ 714 |     | <span class='neutral'>      }</span>
+ 715 |     | <span class='neutral'></span>
+ 716 |     | <span class='neutral'>      require (result &lt;= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);</span>
+ 717 |     | <span class='neutral'>      return uint128 (result);</span>
+ 718 |     | <span class='neutral'>    }</span>
+ 719 |     | <span class='neutral'>  }</span>
+ 720 |     | <span class='neutral'></span>
+ 721 |     | <span class='neutral'>  /**</span>
+ 722 |     | <span class='neutral'>   * Calculate sqrt (x) rounding down, where x is unsigned 256-bit integer</span>
+ 723 |     | <span class='neutral'>   * number.</span>
+ 724 |     | <span class='neutral'>   *</span>
+ 725 |     | <span class='neutral'>   * @param x unsigned 256-bit integer number</span>
+ 726 |     | <span class='neutral'>   * @return unsigned 128-bit integer number</span>
+ 727 |     | <span class='neutral'>   */</span>
+ 728 |     | <span class='neutral'>  function sqrtu (uint256 x) private pure returns (uint128) {</span>
+ 729 |     | <span class='neutral'>    unchecked {</span>
+ 730 |     | <span class='neutral'>      if (x == 0) return 0;</span>
+ 731 |     | <span class='neutral'>      else {</span>
+ 732 |     | <span class='neutral'>        uint256 xx = x;</span>
+ 733 |     | <span class='neutral'>        uint256 r = 1;</span>
+ 734 |     | <span class='neutral'>        if (xx &gt;= 0x100000000000000000000000000000000) { xx &gt;&gt;= 128; r &lt;&lt;= 64; }</span>
+ 735 |     | <span class='neutral'>        if (xx &gt;= 0x10000000000000000) { xx &gt;&gt;= 64; r &lt;&lt;= 32; }</span>
+ 736 |     | <span class='neutral'>        if (xx &gt;= 0x100000000) { xx &gt;&gt;= 32; r &lt;&lt;= 16; }</span>
+ 737 |     | <span class='neutral'>        if (xx &gt;= 0x10000) { xx &gt;&gt;= 16; r &lt;&lt;= 8; }</span>
+ 738 |     | <span class='neutral'>        if (xx &gt;= 0x100) { xx &gt;&gt;= 8; r &lt;&lt;= 4; }</span>
+ 739 |     | <span class='neutral'>        if (xx &gt;= 0x10) { xx &gt;&gt;= 4; r &lt;&lt;= 2; }</span>
+ 740 |     | <span class='neutral'>        if (xx &gt;= 0x8) { r &lt;&lt;= 1; }</span>
+ 741 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 742 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 743 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 744 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 745 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 746 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1;</span>
+ 747 |     | <span class='neutral'>        r = (r + x / r) &gt;&gt; 1; // Seven iterations should be enough</span>
+ 748 |     | <span class='neutral'>        uint256 r1 = x / r;</span>
+ 749 |     | <span class='neutral'>        return uint128 (r &lt; r1 ? r : r1);</span>
+ 750 |     | <span class='neutral'>      }</span>
+ 751 |     | <span class='neutral'>    }</span>
+ 752 |     | <span class='neutral'>  }</span>
+ 753 |     | <span class='neutral'>}</span>
+ 754 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/gianfranco/GitHub/Trail-Of-Bits-how-to-fuzz-like-a-pro-homework/part2/abdk/EchidnaABDKMath64x64.sol</b>
+<code>
+   1 |     | <span class='neutral'>pragma solidity ^0.8.0;</span>
+   2 |     | <span class='neutral'></span>
+   3 |     | <span class='neutral'>import &quot;./ABDKMath64x64.sol&quot;;</span>
+   4 |     | <span class='neutral'></span>
+   5 | *or | <span class='executed'>contract EchidnaABDKMath64x64 {</span>
+   6 |     | <span class='neutral'>    /* ================================================================</span>
+   7 |     | <span class='neutral'>       Library wrappers.</span>
+   8 |     | <span class='neutral'>       These functions allow calling the ABDKMath64x64 library.</span>
+   9 |     | <span class='neutral'>       ================================================================ */</span>
+  10 |     | <span class='neutral'>    function debug(string calldata x, int128 y) private {</span>
+  11 |     | <span class='neutral'>        emit Value(x, ABDKMath64x64.toInt(y));</span>
+  12 |     | <span class='neutral'>    }</span>
+  13 |     | <span class='neutral'></span>
+  14 |     | <span class='neutral'>    function fromInt(int256 x) private returns (int128) {</span>
+  15 |     | <span class='neutral'>        return ABDKMath64x64.fromInt(x);</span>
+  16 |     | <span class='neutral'>    }</span>
+  17 |     | <span class='neutral'></span>
+  18 | *   | <span class='executed'>    function toInt(int128 x) private returns (int64) {</span>
+  19 | *   | <span class='executed'>        return ABDKMath64x64.toInt(x);</span>
+  20 |     | <span class='neutral'>    }</span>
+  21 |     | <span class='neutral'></span>
+  22 | *   | <span class='executed'>    function fromUInt(uint256 x) private returns (int128) {</span>
+  23 | *   | <span class='executed'>        return ABDKMath64x64.fromUInt(x);</span>
+  24 |     | <span class='neutral'>    }</span>
+  25 |     | <span class='neutral'></span>
+  26 |     | <span class='neutral'>    function toUInt(int128 x) private returns (uint64) {</span>
+  27 |     | <span class='neutral'>        return ABDKMath64x64.toUInt(x);</span>
+  28 |     | <span class='neutral'>    }</span>
+  29 |     | <span class='neutral'></span>
+  30 |     | <span class='neutral'>    function from128x128(int256 x) private returns (int128) {</span>
+  31 |     | <span class='neutral'>        return ABDKMath64x64.from128x128(x);</span>
+  32 |     | <span class='neutral'>    }</span>
+  33 |     | <span class='neutral'></span>
+  34 |     | <span class='neutral'>    function to128x128(int128 x) private returns (int256) {</span>
+  35 |     | <span class='neutral'>        return ABDKMath64x64.to128x128(x);</span>
+  36 |     | <span class='neutral'>    }</span>
+  37 |     | <span class='neutral'></span>
+  38 | *   | <span class='executed'>    function add(int128 x, int128 y) private returns (int128) {</span>
+  39 | *   | <span class='executed'>        return ABDKMath64x64.add(x, y);</span>
+  40 |     | <span class='neutral'>    }</span>
+  41 |     | <span class='neutral'></span>
+  42 | *   | <span class='executed'>    function sub(int128 x, int128 y) private returns (int128) {</span>
+  43 | *   | <span class='executed'>        return ABDKMath64x64.sub(x, y);</span>
+  44 |     | <span class='neutral'>    }</span>
+  45 |     | <span class='neutral'></span>
+  46 | *   | <span class='executed'>    function mul(int128 x, int128 y) private returns (int128) {</span>
+  47 | *   | <span class='executed'>        return ABDKMath64x64.mul(x, y);</span>
+  48 |     | <span class='neutral'>    }</span>
+  49 |     | <span class='neutral'></span>
+  50 |     | <span class='neutral'>    function muli(int128 x, int256 y) private returns (int256) {</span>
+  51 |     | <span class='neutral'>        return ABDKMath64x64.muli(x, y);</span>
+  52 |     | <span class='neutral'>    }</span>
+  53 |     | <span class='neutral'></span>
+  54 |     | <span class='neutral'>    function mulu(int128 x, uint256 y) private returns (uint256) {</span>
+  55 |     | <span class='neutral'>        return ABDKMath64x64.mulu(x, y);</span>
+  56 |     | <span class='neutral'>    }</span>
+  57 |     | <span class='neutral'></span>
+  58 | *   | <span class='executed'>    function div(int128 x, int128 y) private returns (int128) {</span>
+  59 | *   | <span class='executed'>        return ABDKMath64x64.div(x, y);</span>
+  60 |     | <span class='neutral'>    }</span>
+  61 |     | <span class='neutral'></span>
+  62 |     | <span class='neutral'>    function divi(int256 x, int256 y) private returns (int128) {</span>
+  63 |     | <span class='neutral'>        return ABDKMath64x64.divi(x, y);</span>
+  64 |     | <span class='neutral'>    }</span>
+  65 |     | <span class='neutral'></span>
+  66 |     | <span class='neutral'>    function divu(uint256 x, uint256 y) private returns (int128) {</span>
+  67 |     | <span class='neutral'>        return ABDKMath64x64.divu(x, y);</span>
+  68 |     | <span class='neutral'>    }</span>
+  69 |     | <span class='neutral'></span>
+  70 |     | <span class='neutral'>    function neg(int128 x) private returns (int128) {</span>
+  71 |     | <span class='neutral'>        return ABDKMath64x64.neg(x);</span>
+  72 |     | <span class='neutral'>    }</span>
+  73 |     | <span class='neutral'></span>
+  74 | *   | <span class='executed'>    function abs(int128 x) private returns (int128) {</span>
+  75 | *   | <span class='executed'>        return ABDKMath64x64.abs(x);</span>
+  76 |     | <span class='neutral'>    }</span>
+  77 |     | <span class='neutral'></span>
+  78 |     | <span class='neutral'>    function inv(int128 x) private returns (int128) {</span>
+  79 |     | <span class='neutral'>        return ABDKMath64x64.inv(x);</span>
+  80 |     | <span class='neutral'>    }</span>
+  81 |     | <span class='neutral'></span>
+  82 |     | <span class='neutral'>    function avg(int128 x, int128 y) private returns (int128) {</span>
+  83 |     | <span class='neutral'>        return ABDKMath64x64.avg(x, y);</span>
+  84 |     | <span class='neutral'>    }</span>
+  85 |     | <span class='neutral'></span>
+  86 |     | <span class='neutral'>    function gavg(int128 x, int128 y) private returns (int128) {</span>
+  87 |     | <span class='neutral'>        return ABDKMath64x64.gavg(x, y);</span>
+  88 |     | <span class='neutral'>    }</span>
+  89 |     | <span class='neutral'></span>
+  90 |     | <span class='neutral'>    function pow(int128 x, uint256 y) private returns (int128) {</span>
+  91 |     | <span class='neutral'>        return ABDKMath64x64.pow(x, y);</span>
+  92 |     | <span class='neutral'>    }</span>
+  93 |     | <span class='neutral'></span>
+  94 |     | <span class='neutral'>    function sqrt(int128 x) private returns (int128) {</span>
+  95 |     | <span class='neutral'>        return ABDKMath64x64.sqrt(x);</span>
+  96 |     | <span class='neutral'>    }</span>
+  97 |     | <span class='neutral'></span>
+  98 | *   | <span class='executed'>    function log_2(int128 x) private returns (int128) {</span>
+  99 | *   | <span class='executed'>        return ABDKMath64x64.log_2(x);</span>
+ 100 |     | <span class='neutral'>    }</span>
+ 101 |     | <span class='neutral'></span>
+ 102 |     | <span class='neutral'>    function ln(int128 x) private returns (int128) {</span>
+ 103 |     | <span class='neutral'>        return ABDKMath64x64.ln(x);</span>
+ 104 |     | <span class='neutral'>    }</span>
+ 105 |     | <span class='neutral'></span>
+ 106 |     | <span class='neutral'>    function exp_2(int128 x) private returns (int128) {</span>
+ 107 |     | <span class='neutral'>        return ABDKMath64x64.exp_2(x);</span>
+ 108 |     | <span class='neutral'>    }</span>
+ 109 |     | <span class='neutral'></span>
+ 110 |     | <span class='neutral'>    function exp(int128 x) private returns (int128) {</span>
+ 111 |     | <span class='neutral'>        return ABDKMath64x64.exp(x);</span>
+ 112 |     | <span class='neutral'>    }</span>
+ 113 |     | <span class='neutral'></span>
+ 114 |     | <span class='neutral'>    /* ================================================================</span>
+ 115 |     | <span class='neutral'>       64x64 fixed-point constants used for testing specific values.</span>
+ 116 |     | <span class='neutral'>       This assumes that ABDK library&#39;s fromInt(x) works as expected.</span>
+ 117 |     | <span class='neutral'>       ================================================================ */</span>
+ 118 |     | <span class='unexecuted'>    int128 internal ZERO_FP = ABDKMath64x64.fromInt(0);</span>
+ 119 |     | <span class='unexecuted'>    int128 internal ONE_FP = ABDKMath64x64.fromInt(1);</span>
+ 120 |     | <span class='unexecuted'>    int128 internal MINUS_ONE_FP = ABDKMath64x64.fromInt(-1);</span>
+ 121 |     | <span class='unexecuted'>    int128 internal TWO_FP = ABDKMath64x64.fromInt(2);</span>
+ 122 |     | <span class='unexecuted'>    int128 internal THREE_FP = ABDKMath64x64.fromInt(3);</span>
+ 123 |     | <span class='unexecuted'>    int128 internal EIGHT_FP = ABDKMath64x64.fromInt(8);</span>
+ 124 |     | <span class='unexecuted'>    int128 internal THOUSAND_FP = ABDKMath64x64.fromInt(1000);</span>
+ 125 |     | <span class='unexecuted'>    int128 internal MINUS_SIXTY_FOUR_FP = ABDKMath64x64.fromInt(-64);</span>
+ 126 |     | <span class='unexecuted'>    int128 internal EPSILON = 1;</span>
+ 127 |     | <span class='unexecuted'>    int128 internal ONE_TENTH_FP =</span>
+ 128 |     | <span class='unexecuted'>        ABDKMath64x64.div(ABDKMath64x64.fromInt(1), ABDKMath64x64.fromInt(100));</span>
+ 129 |     | <span class='neutral'></span>
+ 130 |     | <span class='neutral'>    /* ================================================================</span>
+ 131 |     | <span class='neutral'>       Constants used for precision loss calculations</span>
+ 132 |     | <span class='neutral'>       ================================================================ */</span>
+ 133 |     | <span class='unexecuted'>    uint256 internal REQUIRED_SIGNIFICANT_BITS = 10;</span>
+ 134 |     | <span class='neutral'></span>
+ 135 |     | <span class='neutral'>    /* ================================================================</span>
+ 136 |     | <span class='neutral'>       Integer representations maximum values.</span>
+ 137 |     | <span class='neutral'>       These constants are used for testing edge cases or limits for </span>
+ 138 |     | <span class='neutral'>       possible values.</span>
+ 139 |     | <span class='neutral'>       ================================================================ */</span>
+ 140 |     | <span class='neutral'>    int128 private constant MIN_64x64 = -0x80000000000000000000000000000000;</span>
+ 141 |     | <span class='neutral'>    int128 private constant MAX_64x64 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;</span>
+ 142 |     | <span class='neutral'>    int256 private constant MAX_256 =</span>
+ 143 |     | <span class='neutral'>        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;</span>
+ 144 |     | <span class='neutral'>    int256 private constant MIN_256 =</span>
+ 145 |     | <span class='neutral'>        -0x8000000000000000000000000000000000000000000000000000000000000000;</span>
+ 146 |     | <span class='neutral'>    uint256 private constant MAX_U256 =</span>
+ 147 |     | <span class='neutral'>        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;</span>
+ 148 |     | <span class='neutral'></span>
+ 149 |     | <span class='neutral'>    /* ================================================================</span>
+ 150 |     | <span class='neutral'>       Helper functions.</span>
+ 151 |     | <span class='neutral'>       ================================================================ */</span>
+ 152 |     | <span class='neutral'></span>
+ 153 |     | <span class='neutral'>    // This function allows to compare a and b for equality, discarding</span>
+ 154 |     | <span class='neutral'>    // the last precision_bits bits.</span>
+ 155 |     | <span class='neutral'>    // This implements an absolute value function in order to not use</span>
+ 156 |     | <span class='neutral'>    // the implementation from the library under test.</span>
+ 157 |     | <span class='neutral'>    function equal_within_precision(</span>
+ 158 |     | <span class='neutral'>        int128 a,</span>
+ 159 |     | <span class='neutral'>        int128 b,</span>
+ 160 |     | <span class='neutral'>        uint256 precision_bits</span>
+ 161 |     | <span class='neutral'>    ) private returns (bool) {</span>
+ 162 |     | <span class='neutral'>        int128 max = (a &gt; b) ? a : b;</span>
+ 163 |     | <span class='neutral'>        int128 min = (a &gt; b) ? b : a;</span>
+ 164 |     | <span class='neutral'>        int128 r = (max - min) &gt;&gt; precision_bits;</span>
+ 165 |     | <span class='neutral'></span>
+ 166 |     | <span class='neutral'>        return (r == 0);</span>
+ 167 |     | <span class='neutral'>    }</span>
+ 168 |     | <span class='neutral'></span>
+ 169 |     | <span class='neutral'>    function equal_within_precision_u(</span>
+ 170 |     | <span class='neutral'>        uint256 a,</span>
+ 171 |     | <span class='neutral'>        uint256 b,</span>
+ 172 |     | <span class='neutral'>        uint256 precision_bits</span>
+ 173 |     | <span class='neutral'>    ) private returns (bool) {</span>
+ 174 |     | <span class='neutral'>        uint256 max = (a &gt; b) ? a : b;</span>
+ 175 |     | <span class='neutral'>        uint256 min = (a &gt; b) ? b : a;</span>
+ 176 |     | <span class='neutral'>        uint256 r = (max - min) &gt;&gt; precision_bits;</span>
+ 177 |     | <span class='neutral'></span>
+ 178 |     | <span class='neutral'>        return (r == 0);</span>
+ 179 |     | <span class='neutral'>    }</span>
+ 180 |     | <span class='neutral'></span>
+ 181 |     | <span class='neutral'>    // This function determines if the relative error between a and b is less</span>
+ 182 |     | <span class='neutral'>    // than error_percent % (expressed as a 64x64 value)</span>
+ 183 |     | <span class='neutral'>    // Uses functions from the library under test!</span>
+ 184 | *   | <span class='executed'>    function equal_within_tolerance(</span>
+ 185 |     | <span class='neutral'>        int128 a,</span>
+ 186 |     | <span class='neutral'>        int128 b,</span>
+ 187 |     | <span class='neutral'>        int128 error_percent</span>
+ 188 | *   | <span class='executed'>    ) private returns (bool) {</span>
+ 189 | *   | <span class='executed'>        int128 tol_value = abs(mul(a, div(error_percent, fromUInt(100))));</span>
+ 190 |     | <span class='neutral'></span>
+ 191 | *   | <span class='executed'>        return (abs(sub(b, a)) &lt;= tol_value);</span>
+ 192 |     | <span class='neutral'>    }</span>
+ 193 |     | <span class='neutral'></span>
+ 194 |     | <span class='neutral'>    // Check that there are remaining significant digits after a multiplication</span>
+ 195 |     | <span class='neutral'>    // Uses functions from the library under test!</span>
+ 196 |     | <span class='neutral'>    function significant_digits_lost_in_mult(</span>
+ 197 |     | <span class='neutral'>        int128 a,</span>
+ 198 |     | <span class='neutral'>        int128 b</span>
+ 199 |     | <span class='neutral'>    ) private returns (bool) {</span>
+ 200 |     | <span class='neutral'>        int128 x = a &gt;= 0 ? a : -a;</span>
+ 201 |     | <span class='neutral'>        int128 y = b &gt;= 0 ? b : -b;</span>
+ 202 |     | <span class='neutral'></span>
+ 203 |     | <span class='neutral'>        int128 lx = toInt(log_2(x));</span>
+ 204 |     | <span class='neutral'>        int128 ly = toInt(log_2(y));</span>
+ 205 |     | <span class='neutral'></span>
+ 206 |     | <span class='neutral'>        return (lx + ly - 1 &lt;= -64);</span>
+ 207 |     | <span class='neutral'>    }</span>
+ 208 |     | <span class='neutral'></span>
+ 209 |     | <span class='neutral'>    // Return how many significant bits will remain after multiplying a and b</span>
+ 210 |     | <span class='neutral'>    // Uses functions from the library under test!</span>
+ 211 | *   | <span class='executed'>    function significant_bits_after_mult(</span>
+ 212 |     | <span class='neutral'>        int128 a,</span>
+ 213 |     | <span class='neutral'>        int128 b</span>
+ 214 | *   | <span class='executed'>    ) private returns (uint256) {</span>
+ 215 | *   | <span class='executed'>        int128 x = a &gt;= 0 ? a : -a;</span>
+ 216 | *   | <span class='executed'>        int128 y = b &gt;= 0 ? b : -b;</span>
+ 217 |     | <span class='neutral'></span>
+ 218 | *   | <span class='executed'>        int128 lx = toInt(log_2(x));</span>
+ 219 | *   | <span class='executed'>        int128 ly = toInt(log_2(y));</span>
+ 220 | *   | <span class='executed'>        int256 prec = lx + ly - 1;</span>
+ 221 |     | <span class='neutral'></span>
+ 222 | *   | <span class='executed'>        if (prec &lt; -64) return 0;</span>
+ 223 | *   | <span class='executed'>        else return (64 + uint256(prec));</span>
+ 224 |     | <span class='neutral'>    }</span>
+ 225 |     | <span class='neutral'></span>
+ 226 |     | <span class='neutral'>    // Return the i most significant bits from |n|. If n has less than i significant bits, return |n|</span>
+ 227 |     | <span class='neutral'>    // Uses functions from the library under test!</span>
+ 228 |     | <span class='neutral'>    function most_significant_bits(</span>
+ 229 |     | <span class='neutral'>        int128 n,</span>
+ 230 |     | <span class='neutral'>        uint256 i</span>
+ 231 |     | <span class='neutral'>    ) private returns (uint256) {</span>
+ 232 |     | <span class='neutral'>        // Create a mask consisting of i bits set to 1</span>
+ 233 |     | <span class='neutral'>        uint256 mask = (2 ** i) - 1;</span>
+ 234 |     | <span class='neutral'></span>
+ 235 |     | <span class='neutral'>        // Get the position of the MSB set to 1 of n</span>
+ 236 |     | <span class='neutral'>        uint256 pos = uint64(toInt(log_2(n)) + 64 + 1);</span>
+ 237 |     | <span class='neutral'></span>
+ 238 |     | <span class='neutral'>        // Get the positive value of n</span>
+ 239 |     | <span class='neutral'>        uint256 value = (n &gt; 0) ? uint128(n) : uint128(-n);</span>
+ 240 |     | <span class='neutral'></span>
+ 241 |     | <span class='neutral'>        // Shift the mask to match the rightmost 1-set bit</span>
+ 242 |     | <span class='neutral'>        if (pos &gt; i) {</span>
+ 243 |     | <span class='neutral'>            mask &lt;&lt;= (pos - i);</span>
+ 244 |     | <span class='neutral'>        }</span>
+ 245 |     | <span class='neutral'></span>
+ 246 |     | <span class='neutral'>        return (value &amp; mask);</span>
+ 247 |     | <span class='neutral'>    }</span>
+ 248 |     | <span class='neutral'></span>
+ 249 |     | <span class='neutral'>    // Returns true if the n most significant bits of a and b are almost equal</span>
+ 250 |     | <span class='neutral'>    // Uses functions from the library under test!</span>
+ 251 |     | <span class='neutral'>    function equal_most_significant_bits_within_precision(</span>
+ 252 |     | <span class='neutral'>        int128 a,</span>
+ 253 |     | <span class='neutral'>        int128 b,</span>
+ 254 |     | <span class='neutral'>        uint256 bits</span>
+ 255 |     | <span class='neutral'>    ) private returns (bool) {</span>
+ 256 |     | <span class='neutral'>        uint256 a_bits = uint256(int256(toInt(log_2(a)) + 64));</span>
+ 257 |     | <span class='neutral'>        uint256 b_bits = uint256(int256(toInt(log_2(b)) + 64));</span>
+ 258 |     | <span class='neutral'></span>
+ 259 |     | <span class='neutral'>        uint256 shift_bits = (a_bits &gt; b_bits)</span>
+ 260 |     | <span class='neutral'>            ? (a_bits - bits)</span>
+ 261 |     | <span class='neutral'>            : (b_bits - bits);</span>
+ 262 |     | <span class='neutral'></span>
+ 263 |     | <span class='neutral'>        uint256 a_msb = most_significant_bits(a, bits) &gt;&gt; shift_bits;</span>
+ 264 |     | <span class='neutral'>        uint256 b_msb = most_significant_bits(b, bits) &gt;&gt; shift_bits;</span>
+ 265 |     | <span class='neutral'></span>
+ 266 |     | <span class='neutral'>        return equal_within_precision_u(a_msb, b_msb, 1);</span>
+ 267 |     | <span class='neutral'>    }</span>
+ 268 |     | <span class='neutral'></span>
+ 269 |     | <span class='neutral'>    /* ================================================================</span>
+ 270 |     | <span class='neutral'>       Events used for debugging or showing information.</span>
+ 271 |     | <span class='neutral'>       ================================================================ */</span>
+ 272 |     | <span class='neutral'>    event Value(string reason, int128 val);</span>
+ 273 |     | <span class='neutral'>    event LogErr(bytes error);</span>
+ 274 |     | <span class='neutral'>    event Debug(int128, int128);</span>
+ 275 |     | <span class='neutral'></span>
+ 276 |     | <span class='neutral'>    /* ================================================================</span>
+ 277 |     | <span class='neutral'>    Start of tests</span>
+ 278 |     | <span class='neutral'>    ================================================================ */</span>
+ 279 |     | <span class='neutral'></span>
+ 280 |     | <span class='neutral'>    // Test for associative property</span>
+ 281 |     | <span class='neutral'>    // (x + y) + z == x + (y + z)</span>
+ 282 | *   | <span class='executed'>    function add_test_associative(int128 x, int128 y, int128 z) public {</span>
+ 283 | *   | <span class='executed'>        int128 x_y = add(x, y);</span>
+ 284 | *   | <span class='executed'>        int128 xy_z = add(x_y, z);</span>
+ 285 | *   | <span class='executed'>        int128 y_z = add(y, z);</span>
+ 286 | *   | <span class='executed'>        int128 x_yz = add(x, y_z);</span>
+ 287 |     | <span class='neutral'></span>
+ 288 | *   | <span class='executed'>        assert(xy_z == x_yz);</span>
+ 289 |     | <span class='neutral'>    }</span>
+ 290 |     | <span class='neutral'></span>
+ 291 |     | <span class='neutral'>    // Test (x + y) - y == x</span>
+ 292 | *   | <span class='executed'>    function add_sub_inverse_operations(int128 x, int128 y) public {</span>
+ 293 | *   | <span class='executed'>        emit Debug(x, y);</span>
+ 294 | *   | <span class='executed'>        int128 x_y = add(x, y);</span>
+ 295 | *   | <span class='executed'>        int128 xy_y = sub(x_y, y);</span>
+ 296 | *   | <span class='executed'>        emit Debug(x_y, xy_y);</span>
+ 297 | *   | <span class='executed'>        assert(xy_y == x);</span>
+ 298 |     | <span class='neutral'>    }</span>
+ 299 |     | <span class='neutral'></span>
+ 300 |     | <span class='neutral'>    // Test that division is not commutative</span>
+ 301 |     | <span class='neutral'>    // (x / y) != (y / x)</span>
+ 302 | *   | <span class='executed'>    function div_test_not_commutative(int128 x, int128 y) public {</span>
+ 303 |     | <span class='neutral'>        // Pre-conditions</span>
+ 304 |     | <span class='neutral'>        //require(abs(x) != abs(y));</span>
+ 305 | *   | <span class='executed'>        int128 x_y = div(x, y);</span>
+ 306 | *   | <span class='executed'>        int128 y_x = div(y, x);</span>
+ 307 |     | <span class='neutral'>        // Post-conditions</span>
+ 308 | *   | <span class='executed'>        if (abs(x) == abs(y)) {</span>
+ 309 | *   | <span class='executed'>            assert(x_y == y_x);</span>
+ 310 |     | <span class='neutral'>        } else {</span>
+ 311 | *   | <span class='executed'>            assert(x_y != y_x);</span>
+ 312 |     | <span class='neutral'>        }</span>
+ 313 |     | <span class='neutral'>    }</span>
+ 314 |     | <span class='neutral'></span>
+ 315 |     | <span class='neutral'>    // Test that product is associative</span>
+ 316 |     | <span class='neutral'>    // (x * y) * z == x * (y * z)</span>
+ 317 | *   | <span class='executed'>    function mul_test_associative(int128 x, int128 y, int128 z) public {</span>
+ 318 |     | <span class='neutral'>        // Edge cases</span>
+ 319 | *   | <span class='executed'>        int128 x_y = mul(x, y);</span>
+ 320 | *   | <span class='executed'>        int128 xy_z = mul(x_y, z);</span>
+ 321 | *   | <span class='executed'>        int128 y_z = mul(y, z);</span>
+ 322 | *   | <span class='executed'>        int128 x_yz = mul(x, y_z);</span>
+ 323 |     | <span class='neutral'></span>
+ 324 | *r  | <span class='executed'>        require(significant_bits_after_mult(x, y) &gt; REQUIRED_SIGNIFICANT_BITS);</span>
+ 325 | *r  | <span class='executed'>        require(significant_bits_after_mult(y, z) &gt; REQUIRED_SIGNIFICANT_BITS);</span>
+ 326 | *   | <span class='executed'>        require(</span>
+ 327 | *   | <span class='executed'>            significant_bits_after_mult(x_y, z) &gt; REQUIRED_SIGNIFICANT_BITS</span>
+ 328 |     | <span class='neutral'>        );</span>
+ 329 | *   | <span class='executed'>        require(</span>
+ 330 | *   | <span class='executed'>            significant_bits_after_mult(x, y_z) &gt; REQUIRED_SIGNIFICANT_BITS</span>
+ 331 |     | <span class='neutral'>        );</span>
+ 332 |     | <span class='neutral'></span>
+ 333 | *   | <span class='executed'>        assert(equal_within_tolerance(xy_z, x_yz, ONE_TENTH_FP));</span>
+ 334 |     | <span class='neutral'>    }</span>
+ 335 |     | <span class='neutral'>}</span>
+ 336 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
