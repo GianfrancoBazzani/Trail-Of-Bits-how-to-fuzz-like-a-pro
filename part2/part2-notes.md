@@ -1,5 +1,4 @@
-# Part 1: Fuzzing Arithmetics 
-## ABDKMath Library
+## ABDKMath Library: ABDKMath Library
 - Implements fixed-point integers for rational numbers.
 - Has basic operations like add()/sub() and more complex operations like inv()/log2().
 - 64.64 integer is represented in an int128 variable.
